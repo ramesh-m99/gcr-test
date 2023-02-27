@@ -1,11 +1,23 @@
-FROM node:14-alpine3.14 AS build
-WORKDIR /app
-COPY package.json /app
-RUN npm install
-CMD npm run build
+# Stage 1: Compile and Build angular codebase
 
-COPY  . /app
-CMD [ "npm","run","prod" ]
+# Use official node image as the base image
+FROM node:18.11.0 as build
 
-FROM nginx:alpine
-COPY /dist/frontend /usr/share/nginx/html
+# Set the working directory
+WORKDIR /usr/local/app
+
+# Add the source code to app
+COPY ./ /usr/local/app/
+
+# Install all the dependencies
+RUN npm install --legacy-peer-deps
+
+# Generate the build of the application
+RUN npm run build
+
+
+# Stage 2: Serve app with nginx server
+
+# Use official nginx image as the base image
+FROM nginx:latest
+COPY --from=build /usr/local/app/dist/frontend /usr/share/nginx/html
